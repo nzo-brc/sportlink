@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sport Link — Tournois sportifs à Tours</title>
+<meta name="description" content="La plateforme de tournois sportifs de Tours. Rejoins un tournoi, suis les scores en direct, rencontre des joueurs près de chez toi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1A6BF5;--blue2:#1559d4;--blue3:#EBF1FF;--blue4:#D3E3FF;
+  --dark:#0C1A3A;--bg:#F7F9FF;--bg2:#EEF3FF;
+  --text:#0C1A3A;--muted:#6B7A99;--muted2:#A8B4CC;
+  --border:#DDE5F5;--border2:#C5D3F0;--r:14px;--rs:8px
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:15px;line-height:1.6}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:2px}
+
+.nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:62px}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;cursor:pointer;user-select:none;color:var(--dark)}
+.nav-logo span{color:var(--blue)}
+.nav-center{display:flex;gap:4px}
+.nav-link{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;padding:7px 14px;border-radius:50px;cursor:pointer;transition:all .2s}
+.nav-link:hover{color:var(--text)}
+.nav-link.active{background:var(--bg2);color:var(--blue);font-weight:500}
+.nav-right{display:flex;gap:8px;align-items:center}
+.btn-ghost{background:none;border:1px solid var(--border2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 18px;border-radius:50px;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.btn-blue{background:var(--blue);border:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:7px 20px;border-radius:50px;cursor:pointer;transition:all .2s}
+.btn-blue:hover{background:var(--blue2)}
+
+.page{display:none;min-height:calc(100vh - 62px);animation:fade-in .25s ease}
+.page.active{display:block}
+@keyframes fade-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.hero{padding:88px 40px 72px;max-width:960px;margin:0 auto;text-align:center}
+.hero-pill{display:inline-flex;align-items:center;gap:8px;background:var(--blue3);border:1px solid var(--blue4);color:var(--blue);padding:7px 18px;border-radius:50px;font-size:13px;font-weight:500;margin-bottom:32px}
+.hero-pill-dot{width:6px;height:6px;background:var(--blue);border-radius:50%;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,13vw,122px);line-height:.91;letter-spacing:1px;color:var(--dark);margin-bottom:28px}
+.hero h1 em{color:var(--blue);font-style:normal}
+.hero-sub{font-size:17px;color:var(--muted);line-height:1.75;max-width:480px;margin:0 auto 44px}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hero-btn-main{background:var(--blue);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;padding:14px 36px;border-radius:50px;cursor:pointer;transition:all .2s}
+.hero-btn-main:hover{background:var(--blue2);transform:translateY(-1px)}
+.hero-btn-sec{background:#fff;color:var(--text);border:1px solid var(--border2);font-family:'DM Sans',sans-serif;font-size:15px;padding:14px 36px;border-radius:50px;cursor:pointer;transition:all .2s}
+.hero-btn-sec:hover{border-color:var(--blue);color:var(--blue)}
+.hero-stats{margin-top:64px;padding-top:48px;border-top:1px solid var(--border);display:flex;justify-content:center;gap:64px;flex-wrap:wrap}
+.hero-stat-n{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--blue);letter-spacing:1px;line-height:1}
+.hero-stat-l{font-size:13px;color:var(--muted);margin-top:4px}
+
+.how{padding:0 40px 88px;max-width:960px;margin:0 auto}
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--blue);margin-bottom:12px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:1px;color:var(--dark);margin-bottom:36px}
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.how-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:26px 22px}
+.how-num{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--blue);opacity:.2;margin-bottom:14px}
+.how-title{font-size:15px;font-weight:600;color:var(--dark);margin-bottom:8px}
+.how-text{font-size:13px;color:var(--muted);line-height:1.65}
+
+.container{padding:0 40px 72px;max-width:960px;margin:0 auto}
+.container-top{padding-top:44px}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:1px;color:var(--dark);margin-bottom:6px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+.filter{background:#fff;border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 18px;border-radius:50px;cursor:pointer;transition:all .15s}
+.filter:hover,.filter.active{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+
+.t-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.t-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .2s}
+.t-card:hover{border-color:var(--blue);box-shadow:0 6px 28px rgba(26,107,245,.1);transform:translateY(-2px)}
+.t-banner{height:92px;display:flex;align-items:center;justify-content:center;position:relative;font-size:44px}
+.t-tag-wrap{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center}
+.t-sport-tag{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;padding:3px 10px;border-radius:50px;background:rgba(255,255,255,.75);color:var(--dark)}
+.t-status{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 10px;border-radius:50px}
+.s-open{background:rgba(26,107,245,.12);color:var(--blue)}
+.s-full{background:rgba(220,38,38,.1);color:#DC2626}
+.t-body{padding:16px 20px}
+.t-title{font-size:16px;font-weight:600;color:var(--dark);margin-bottom:12px}
+.t-meta{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.t-meta-row{font-size:12px;color:var(--muted)}
+.t-footer{padding-top:14px;border-top:1px solid var(--border)}
+.t-prog-track{height:3px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.t-prog-fill{height:100%;background:var(--blue);border-radius:3px}
+.t-prog-label{font-size:11px;color:var(--muted)}
+
+.empty-state{text-align:center;padding:64px 20px;color:var(--muted);grid-column:1/-1}
+.empty-icon{font-size:48px;margin-bottom:16px}
+.empty-title{font-size:16px;font-weight:600;color:var(--dark);margin-bottom:8px}
+
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;margin-bottom:28px;padding:0;transition:color .2s}
+.back-btn:hover{color:var(--blue)}
+.detail-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.detail-banner{height:136px;display:flex;align-items:center;justify-content:center;font-size:72px}
+.detail-body{padding:24px 28px}
+.detail-title{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:1px;color:var(--dark);margin-bottom:20px}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.d-meta{background:var(--bg2);border-radius:var(--rs);padding:14px 16px}
+.d-meta-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.d-meta-v{font-size:14px;font-weight:600;color:var(--dark)}
+.join-box{background:#fff;border:1.5px solid var(--blue4);border-radius:var(--r);padding:24px 26px;margin-bottom:22px}
+.join-title{font-size:16px;font-weight:600;color:var(--dark);margin-bottom:6px}
+.join-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.join-btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn-join-main{background:var(--blue);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:11px 28px;border-radius:50px;cursor:pointer;transition:all .2s}
+.btn-join-main:hover{background:var(--blue2)}
+.btn-join-ghost{background:#fff;color:var(--text);border:1px solid var(--border2);font-family:'DM Sans',sans-serif;font-size:14px;padding:11px 28px;border-radius:50px;cursor:pointer;transition:all .2s}
+.btn-join-ghost:hover{border-color:var(--blue);color:var(--blue)}
+
+.live-bar{display:inline-flex;align-items:center;gap:7px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:6px 16px;border-radius:50px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:24px}
+.live-dot{width:6px;height:6px;background:#DC2626;border-radius:50%;animation:blink .9s infinite}
+.match-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;margin-bottom:12px}
+.match-round{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:16px}
+.match-row{display:flex;align-items:center;gap:14px}
+.match-team{flex:1;font-size:15px;font-weight:600;color:var(--dark)}
+.match-team.right{text-align:right}
+.match-team.winner{color:var(--blue)}
+.score-block{display:flex;align-items:center;gap:6px;min-width:88px;justify-content:center;background:var(--bg2);border-radius:var(--rs);padding:8px 14px}
+.score-n{font-family:'Bebas Neue',sans-serif;font-size:30px;min-width:20px;text-align:center;color:var(--dark)}
+.score-sep{color:var(--muted);font-size:17px}
+.match-foot{display:flex;justify-content:center;margin-top:14px}
+.status-chip{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:4px 14px;border-radius:50px}
+.chip-live{background:rgba(220,38,38,.1);color:#DC2626}
+.chip-done{background:rgba(26,107,245,.1);color:var(--blue)}
+.chip-soon{background:var(--bg2);color:var(--muted)}
+
+.admin-banner{background:var(--blue3);border:1px solid var(--blue4);border-radius:var(--r);padding:16px 22px;margin-bottom:24px}
+.admin-banner-text{font-size:13px;color:var(--blue);font-weight:500}
+.admin-form{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:24px 26px;margin-bottom:32px}
+.admin-form-title{font-size:16px;font-weight:600;color:var(--dark);margin-bottom:20px}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.field{margin-bottom:0}
+.field label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+.field input,.field select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--blue);background:#fff}
+.field input::placeholder{color:var(--muted2)}
+.btn-create{background:var(--blue);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:11px 28px;border-radius:50px;cursor:pointer;transition:all .2s}
+.btn-create:hover{background:var(--blue2)}
+.btn-create:disabled{opacity:.6;cursor:not-allowed}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(12,26,58,.45);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border:1px solid var(--border);border-radius:22px;padding:38px 34px;width:100%;max-width:420px;position:relative;box-shadow:0 24px 64px rgba(26,107,245,.13);animation:slide-up .22s ease}
+@keyframes slide-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.modal-x{position:absolute;top:18px;right:18px;background:var(--bg2);border:none;color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.modal-x:hover{background:var(--border2)}
+.modal-logo{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;text-align:center;color:var(--dark);margin-bottom:4px}
+.modal-logo span{color:var(--blue)}
+.modal-tagline{text-align:center;font-size:13px;color:var(--muted);margin-bottom:26px}
+.modal-tabs{display:flex;background:var(--bg2);border-radius:50px;padding:3px;margin-bottom:26px}
+.modal-tab{flex:1;background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;padding:9px;border-radius:50px;cursor:pointer;transition:all .2s}
+.modal-tab.active{background:var(--blue);color:#fff;font-weight:600}
+.modal-field{margin-bottom:16px}
+.modal-field label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+.modal-field input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.modal-field input:focus{border-color:var(--blue);background:#fff}
+.modal-field input::placeholder{color:var(--muted2)}
+.btn-submit{width:100%;background:var(--blue);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;padding:13px;border-radius:50px;cursor:pointer;margin-top:8px;transition:background .2s}
+.btn-submit:hover{background:var(--blue2)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed}
+.modal-footer{text-align:center;font-size:12px;color:var(--muted);margin-top:16px}
+.modal-error{background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:10px 14px;border-radius:var(--rs);font-size:13px;margin-bottom:16px;display:none}
+
+.toast{position:fixed;bottom:24px;right:24px;color:#fff;padding:12px 20px;border-radius:var(--rs);font-size:14px;z-index:999;display:none;font-family:'DM Sans',sans-serif}
+.toast.show{display:block;animation:slide-up .3s ease}
+.toast.success{background:#15803d}
+.toast.error{background:#DC2626}
+
+.footer{background:#fff;border-top:1px solid var(--border);padding:32px 40px;text-align:center}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--dark);margin-bottom:8px}
+.footer-logo span{color:var(--blue)}
+.footer-text{font-size:12px;color:var(--muted)}
+
+@media(max-width:680px){
+  .nav{padding:0 20px}.nav-center{display:none}
+  .hero{padding:56px 20px 48px}.hero h1{font-size:72px}.hero-stats{gap:32px}
+  .how{padding:0 20px 56px}.container{padding:0 20px 56px}
+  .admin-grid{grid-template-columns:1fr}.modal{padding:28px 22px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo" onclick="goPage('home')">SPORT<span>.</span>LINK</div>
+  <div class="nav-center">
+    <button class="nav-link" id="nl-tournois" onclick="goPage('tournois')">Tournois</button>
+    <button class="nav-link" id="nl-scores" onclick="goPage('scores')">Scores live</button>
+    <button class="nav-link" id="nl-admin" onclick="goPage('admin')" style="display:none">Admin ⚙️</button>
+  </div>
+  <div class="nav-right">
+    <div id="nav-auth" style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="openModal('login')">Connexion</button>
+      <button class="btn-blue" onclick="openModal('register')">S'inscrire</button>
+    </div>
+    <div id="nav-user" style="display:none;align-items:center;gap:12px">
+      <span id="nav-pseudo" style="font-size:13px;color:var(--muted)"></span>
+      <button class="btn-ghost" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-pill"><div class="hero-pill-dot"></div>Tours — Printemps 2025</div>
+    <h1>TROUVE TON<br><em>TERRAIN.</em><br>JOUE.</h1>
+    <p class="hero-sub">La plateforme de tournois sportifs de Tours. Rejoins un tournoi, suis les résultats en direct, rencontre des joueurs près de chez toi.</p>
+    <div class="hero-btns">
+      <button class="hero-btn-main" onclick="goPage('tournois')">Voir les tournois</button>
+      <button class="hero-btn-sec" onclick="goPage('scores')">Scores en direct</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-n" id="stat-n">—</div><div class="hero-stat-l">Tournois actifs</div></div>
+      <div class="hero-stat"><div class="hero-stat-n">100%</div><div class="hero-stat-l">Gratuit</div></div>
+      <div class="hero-stat"><div class="hero-stat-n">Tours</div><div class="hero-stat-l">Ville</div></div>
+    </div>
+  </div>
+  <div class="how">
+    <div class="section-label">Comment ça marche</div>
+    <div class="section-title">En 3 étapes</div>
+    <div class="how-grid">
+      <div class="how-card"><div class="how-num">01</div><div class="how-title">Crée ton compte</div><div class="how-text">Pseudo + email. Gratuit. 30 secondes. Pas de CB, pas de prise de tête.</div></div>
+      <div class="how-card"><div class="how-num">02</div><div class="how-title">Rejoins un tournoi</div><div class="how-text">Crée ton équipe ou rejoins une équipe qui cherche des joueurs.</div></div>
+      <div class="how-card"><div class="how-num">03</div><div class="how-title">Joue & suis en direct</div><div class="how-text">Les scores sont mis à jour en temps réel pendant le tournoi.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOURNOIS -->
+<div id="page-tournois" class="page">
+  <div class="container container-top">
+    <div class="page-title">Tournois</div>
+    <div class="page-sub">Tours & environs · Saison printemps 2025</div>
+    <div class="filters">
+      <button class="filter active" onclick="setFilter('Tous',this)">Tous</button>
+      <button class="filter" onclick="setFilter('Football',this)">Football</button>
+      <button class="filter" onclick="setFilter('Basketball',this)">Basketball</button>
+      <button class="filter" onclick="setFilter('Tennis',this)">Tennis</button>
+      <button class="filter" onclick="setFilter('Volleyball',this)">Volleyball</button>
+    </div>
+    <div id="t-grid" class="t-grid"></div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div id="page-detail" class="page">
+  <div class="container container-top">
+    <button class="back-btn" onclick="goPage('tournois')">← Retour aux tournois</button>
+    <div id="detail-root"></div>
+  </div>
+</div>
+
+<!-- SCORES -->
+<div id="page-scores" class="page">
+  <div class="container container-top">
+    <div class="page-title">Scores en direct</div>
+    <div class="page-sub">Visible sans compte · mis à jour par l'administrateur</div>
+    <div class="live-bar"><div class="live-dot"></div>Live</div>
+    <div id="scores-root"></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="page-admin" class="page">
+  <div class="container container-top">
+    <div class="page-title">Espace Admin</div>
+    <div class="page-sub">Réservé à l'administrateur Sport Link</div>
+    <div class="admin-banner"><div class="admin-banner-text">✅ Connecté en tant qu'administrateur</div></div>
+    <div class="admin-form">
+      <div class="admin-form-title">Créer un nouveau tournoi</div>
+      <div class="admin-grid">
+        <div class="field"><label>Titre</label><input type="text" id="a-titre" placeholder="Tournoi Foot Pro"></div>
+        <div class="field"><label>Sport</label>
+          <select id="a-sport">
+            <option value="Football">Football ⚽</option>
+            <option value="Basketball">Basketball 🏀</option>
+            <option value="Tennis">Tennis 🎾</option>
+            <option value="Volleyball">Volleyball 🏐</option>
+          </select>
+        </div>
+        <div class="field"><label>Date</label><input type="text" id="a-date" placeholder="12 avr. 2025"></div>
+        <div class="field"><label>Heure</label><input type="text" id="a-heure" placeholder="14h00"></div>
+        <div class="field"><label>Lieu</label><input type="text" id="a-lieu" placeholder="Stade de Tours"></div>
+        <div class="field"><label>Places max</label><input type="number" id="a-places" placeholder="28"></div>
+      </div>
+      <button class="btn-create" id="btn-create" onclick="creerTournoi()">Créer le tournoi</button>
+    </div>
+    <div class="page-title" style="font-size:26px;margin-bottom:16px">Tournois existants</div>
+    <div id="admin-liste"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="closeModalBg(event)">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal()">✕</button>
+    <div class="modal-logo">SPORT<span>.</span>LINK</div>
+    <div class="modal-tagline">Bienvenue sur la plateforme de Tours</div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-reg" onclick="switchTab('reg')">S'inscrire</button>
+      <button class="modal-tab" id="tab-log" onclick="switchTab('log')">Se connecter</button>
+    </div>
+    <div id="modal-error" class="modal-error"></div>
+    <div id="form-reg">
+      <div class="modal-field"><label>Pseudo</label><input type="text" id="reg-pseudo" placeholder="tonpseudo37"></div>
+      <div class="modal-field"><label>Email</label><input type="email" id="reg-email" placeholder="toi@email.com"></div>
+      <div class="modal-field"><label>Ville</label><input type="text" id="reg-ville" value="Tours"></div>
+      <div class="modal-field"><label>Mot de passe</label><input type="password" id="reg-pass" placeholder="••••••••"></div>
+      <button class="btn-submit" id="btn-reg" onclick="register()">Créer mon compte</button>
+      <div class="modal-footer">100% gratuit · aucune CB requise</div>
+    </div>
+    <div id="form-log" style="display:none">
+      <div class="modal-field"><label>Email</label><input type="email" id="log-email" placeholder="toi@email.com"></div>
+      <div class="modal-field"><label>Mot de passe</label><input type="password" id="log-pass" placeholder="••••••••"></div>
+      <button class="btn-submit" id="btn-log" onclick="loginUser()">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer class="footer">
+  <div class="footer-logo">SPORT<span>.</span>LINK</div>
+  <div class="footer-text">Tours · 2025 · La plateforme sportive de ta ville</div>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://zqfqgedrnoxrhkyphkwb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_u7qzC_bOV10EI3US6-e7lw_J8YnJFVm';
+const ADMIN_EMAIL  = 'enzo.barca2008@gmail.com';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const EMOJI = { Football:'⚽', Basketball:'🏀', Tennis:'🎾', Volleyball:'🏐' };
+const BG    = { Football:'#EBF5FF', Basketball:'#FFF4EB', Tennis:'#EDFFF4', Volleyball:'#FFFBEB' };
+
+let user = null, admin = false, filter = 'Tous', tournois = [];
+
+async function init() {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) await setUser(session.user);
+  db.auth.onAuthStateChange(async (_, s) => { if (s) await setUser(s.user); else clearUser(); });
+  await loadTournois();
+}
+
+async function setUser(u) {
+  user = u; admin = u.email === ADMIN_EMAIL;
+  document.getElementById('nav-auth').style.display = 'none';
+  document.getElementById('nav-user').style.display = 'flex';
+  const { data } = await db.from('profils').select('pseudo').eq('email', u.email).single();
+  document.getElementById('nav-pseudo').textContent = data?.pseudo || u.email;
+  if (admin) document.getElementById('nl-admin').style.display = 'block';
+}
+
+function clearUser() {
+  user = null; admin = false;
+  document.getElementById('nav-auth').style.display = 'flex';
+  document.getElementById('nav-user').style.display = 'none';
+  document.getElementById('nl-admin').style.display = 'none';
+}
+
+async function loadTournois() {
+  const { data } = await db.from('tournois').select('*').order('created_at', { ascending: false });
+  tournois = data || [];
+  document.getElementById('stat-n').textContent = tournois.filter(t => t.status === 'open').length || '0';
+}
+
+function goPage(p) {
+  if (p === 'admin' && !admin) { toast('Accès réservé à l\'administrateur', 'error'); return; }
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
+  if (p === 'tournois') { document.getElementById('nl-tournois').classList.add('active'); renderTournois(); }
+  if (p === 'scores')   { document.getElementById('nl-scores').classList.add('active');   renderScores(); }
+  if (p === 'admin')    { document.getElementById('nl-admin').classList.add('active');     renderAdmin(); }
+  window.scrollTo(0, 0);
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTournois();
+}
+
+function renderTournois() {
+  const list = filter === 'Tous' ? tournois : tournois.filter(t => t.sport === filter);
+  const grid = document.getElementById('t-grid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🏟️</div><div class="empty-title">Aucun tournoi pour l'instant</div><p style="font-size:13px">Les tournois apparaîtront ici dès que l'admin en créera un.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(t => {
+    const pct = t.places_max > 0 ? Math.round((t.places_inscrits||0) / t.places_max * 100) : 0;
+    const full = (t.places_inscrits||0) >= t.places_max;
+    return `<div class="t-card" onclick="showDetail(${t.id})">
+      <div class="t-banner" style="background:${BG[t.sport]||'#EBF1FF'}">
+        <span style="font-size:44px">${EMOJI[t.sport]||'🏆'}</span>
+        <div class="t-tag-wrap">
+          <span class="t-sport-tag">${t.sport}</span>
+          <span class="t-status ${full?'s-full':'s-open'}">${full?'Complet':'Ouvert'}</span>
+        </div>
+      </div>
+      <div class="t-body">
+        <div class="t-title">${t.titre}</div>
+        <div class="t-meta">
+          <div class="t-meta-row">📅 ${t.date} · ${t.heure}</div>
+          <div class="t-meta-row">📍 ${t.lieu}</div>
+        </div>
+        <div class="t-footer">
+          <div class="t-prog-track"><div class="t-prog-fill" style="width:${pct}%"></div></div>
+          <div class="t-prog-label">${t.places_inscrits||0} / ${t.places_max} joueurs inscrits</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function showDetail(id) {
+  const t = tournois.find(x => x.id === id);
+  if (!t) return;
+  const full = (t.places_inscrits||0) >= t.places_max;
+  const joinHTML = !full
+    ? `<div class="join-box">
+        <div class="join-title">Rejoindre ce tournoi</div>
+        <div class="join-sub">${user ? 'Clique sur le bouton pour t\'inscrire.' : 'Crée un compte gratuit pour t\'inscrire à ce tournoi.'}</div>
+        <div class="join-btns">
+          ${user
+            ? `<button class="btn-join-main" onclick="sInscrire(${t.id})">M'inscrire à ce tournoi</button>`
+            : `<button class="btn-join-main" onclick="openModal('register')">Créer mon compte</button>
+               <button class="btn-join-ghost" onclick="openModal('login')">Se connecter</button>`}
+        </div>
+      </div>`
+    : `<div class="join-box" style="border-color:rgba(220,38,38,.25)">
+        <div class="join-title">Tournoi complet</div>
+        <div class="join-sub">Toutes les places sont prises. Inscris-toi pour être notifié des prochains tournois.</div>
+        ${!user?`<button class="btn-join-ghost" onclick="openModal('register')">Me notifier</button>`:''}
+      </div>`;
+
+  document.getElementById('detail-root').innerHTML = `
+    <div class="detail-card">
+      <div class="detail-banner" style="background:${BG[t.sport]||'#EBF1FF'}">${EMOJI[t.sport]||'🏆'}</div>
+      <div class="detail-body">
+        <div class="detail-title">${t.titre}</div>
+        <div class="detail-grid">
+          <div class="d-meta"><div class="d-meta-l">Sport</div><div class="d-meta-v">${t.sport}</div></div>
+          <div class="d-meta"><div class="d-meta-l">Date</div><div class="d-meta-v">${t.date}</div></div>
+          <div class="d-meta"><div class="d-meta-l">Heure</div><div class="d-meta-v">${t.heure}</div></div>
+          <div class="d-meta"><div class="d-meta-l">Lieu</div><div class="d-meta-v" style="font-size:12px">${t.lieu}</div></div>
+          <div class="d-meta"><div class="d-meta-l">Places</div><div class="d-meta-v">${t.places_inscrits||0} / ${t.places_max}</div></div>
+        </div>
+      </div>
+    </div>${joinHTML}`;
+  goPage('detail');
+}
+
+async function sInscrire(tid) {
+  if (!user) { openModal('register'); return; }
+  const { error } = await db.from('inscriptions').insert({ tournoi_id: tid, user_id: user.id, nom_equipe: '' });
+  if (error) { toast('Tu es déjà inscrit à ce tournoi !', 'error'); return; }
+  const t = tournois.find(x => x.id === tid);
+  await db.from('tournois').update({ places_inscrits: (t.places_inscrits||0) + 1 }).eq('id', tid);
+  toast('Inscription confirmée ! 🎉', 'success');
+  await loadTournois();
+  showDetail(tid);
+}
+
+function renderScores() {
+  const matchs = [
+    { round:'Quart de finale 1', t1:'Les Lions',   t2:'Red Eagles', s1:3,    s2:1,    st:'done' },
+    { round:'Quart de finale 2', t1:'FC Tours 37', t2:'City Boys',  s1:2,    s2:2,    st:'live' },
+    { round:'Demi-finale 1',     t1:'Les Lions',   t2:'?',          s1:null, s2:null, st:'soon' },
+    { round:'Demi-finale 2',     t1:'?',           t2:'?',          s1:null, s2:null, st:'soon' }
+  ];
+  const chips  = { live:'chip-live', done:'chip-done', soon:'chip-soon' };
+  const labels = { live:'⬤ En cours', done:'Terminé', soon:'À venir' };
+  document.getElementById('scores-root').innerHTML = matchs.map(m => {
+    const s1 = m.s1!==null?m.s1:'–', s2 = m.s2!==null?m.s2:'–';
+    const w1 = m.st==='done'&&m.s1>m.s2?'winner':'', w2 = m.st==='done'&&m.s2>m.s1?'winner':'';
+    return `<div class="match-card">
+      <div class="match-round">${m.round}</div>
+      <div class="match-row">
+        <div class="match-team ${w1}">${m.t1}</div>
+        <div class="score-block"><span class="score-n">${s1}</span><span class="score-sep">–</span><span class="score-n">${s2}</span></div>
+        <div class="match-team right ${w2}">${m.t2}</div>
+      </div>
+      <div class="match-foot"><span class="status-chip ${chips[m.st]}">${labels[m.st]}</span></div>
+    </div>`;
+  }).join('');
+}
+
+async function creerTournoi() {
+  const titre  = document.getElementById('a-titre').value.trim();
+  const sport  = document.getElementById('a-sport').value;
+  const date   = document.getElementById('a-date').value.trim();
+  const heure  = document.getElementById('a-heure').value.trim();
+  const lieu   = document.getElementById('a-lieu').value.trim();
+  const places = parseInt(document.getElementById('a-places').value);
+  if (!titre||!date||!heure||!lieu||!places) { toast('Remplis tous les champs !', 'error'); return; }
+  const btn = document.getElementById('btn-create');
+  btn.disabled = true; btn.textContent = 'Création...';
+  const { error } = await db.from('tournois').insert({ titre, sport, date, heure, lieu, places_max: places, status:'open', places_inscrits:0 });
+  btn.disabled = false; btn.textContent = 'Créer le tournoi';
+  if (error) { toast('Erreur : ' + error.message, 'error'); return; }
+  toast('Tournoi créé ! 🎉', 'success');
+  ['a-titre','a-date','a-heure','a-lieu','a-places'].forEach(id => document.getElementById(id).value = '');
+  await loadTournois();
+  renderAdmin();
+}
+
+function renderAdmin() {
+  const el = document.getElementById('admin-liste');
+  if (!tournois.length) { el.innerHTML = '<p style="color:var(--muted);font-size:14px">Aucun tournoi pour l\'instant.</p>'; return; }
+  el.innerHTML = tournois.map(t => `
+    <div class="match-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-weight:600;font-size:15px;color:var(--dark);margin-bottom:4px">${EMOJI[t.sport]||'🏆'} ${t.titre}</div>
+        <div style="font-size:12px;color:var(--muted)">${t.date} · ${t.heure} · ${t.lieu}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${t.places_inscrits||0} / ${t.places_max} joueurs inscrits</div>
+      </div>
+      <button onclick="supprimerTournoi(${t.id})" style="background:rgba(220,38,38,.1);color:#DC2626;border:none;padding:7px 16px;border-radius:50px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;flex-shrink:0">Supprimer</button>
+    </div>`).join('');
+}
+
+async function supprimerTournoi(id) {
+  if (!confirm('Supprimer ce tournoi définitivement ?')) return;
+  await db.from('tournois').delete().eq('id', id);
+  toast('Tournoi supprimé', 'success');
+  await loadTournois();
+  renderAdmin();
+}
+
+async function register() {
+  const pseudo = document.getElementById('reg-pseudo').value.trim();
+  const email  = document.getElementById('reg-email').value.trim();
+  const ville  = document.getElementById('reg-ville').value.trim();
+  const pass   = document.getElementById('reg-pass').value;
+  if (!pseudo||!email||!pass) { errModal('Remplis tous les champs !'); return; }
+  if (pass.length < 6) { errModal('Le mot de passe doit faire au moins 6 caractères.'); return; }
+  const btn = document.getElementById('btn-reg');
+  btn.disabled = true; btn.textContent = 'Création...';
+  const { data, error } = await db.auth.signUp({ email, password: pass });
+  if (error) { errModal(error.message); btn.disabled=false; btn.textContent='Créer mon compte'; return; }
+  if (data.user) await db.from('profils').insert({ email, pseudo, ville });
+  btn.disabled=false; btn.textContent='Créer mon compte';
+  closeModal();
+  toast('Bienvenue ' + pseudo + ' ! 🎉', 'success');
+}
+
+async function loginUser() {
+  const email = document.getElementById('log-email').value.trim();
+  const pass  = document.getElementById('log-pass').value;
+  if (!email||!pass) { errModal('Remplis tous les champs !'); return; }
+  const btn = document.getElementById('btn-log');
+  btn.disabled = true; btn.textContent = 'Connexion...';
+  const { error } = await db.auth.signInWithPassword({ email, password: pass });
+  btn.disabled=false; btn.textContent='Se connecter';
+  if (error) { errModal('Email ou mot de passe incorrect.'); return; }
+  closeModal();
+  toast('Connexion réussie ! 👋', 'success');
+}
+
+async function logout() {
+  await db.auth.signOut();
+  toast('Déconnecté.', 'success');
+  goPage('home');
+}
+
+function openModal(tab) { document.getElementById('modal-bg').classList.add('open'); switchTab(tab==='login'?'log':'reg'); hideErr(); }
+function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
+function closeModalBg(e) { if (e.target===document.getElementById('modal-bg')) closeModal(); }
+function switchTab(t) {
+  document.getElementById('tab-reg').classList.toggle('active', t==='reg');
+  document.getElementById('tab-log').classList.toggle('active', t==='log');
+  document.getElementById('form-reg').style.display = t==='reg'?'block':'none';
+  document.getElementById('form-log').style.display = t==='log'?'block':'none';
+  hideErr();
+}
+function errModal(msg) { const e=document.getElementById('modal-error'); e.textContent=msg; e.style.display='block'; }
+function hideErr() { document.getElementById('modal-error').style.display='none'; }
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show ' + type;
+  setTimeout(() => el.className = 'toast', 3500);
+}
+
+init();
+</script>
+</body>
+</html>
